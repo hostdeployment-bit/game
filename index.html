@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RIDESPHERE | POPKID</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Inter:wght@400;700&display=swap');
+        body { background: #020617; color: white; font-family: 'Inter', sans-serif; }
+        .neon-font { font-family: 'Orbitron', sans-serif; }
+        .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(51, 65, 85, 0.5); }
+        .neon-border { box-shadow: 0 0 15px rgba(34, 211, 238, 0.3); border: 1px solid rgba(34, 211, 238, 0.5); }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div id="auth-ui" class="glass p-10 rounded-[3rem] w-full max-w-sm text-center">
+        <h1 class="neon-font text-cyan-400 text-3xl font-black italic tracking-tighter mb-1">RIDESPHERE</h1>
+        <p class="text-slate-500 text-[9px] tracking-[0.3em] mb-12 uppercase font-bold">Popkid Edition</p>
+
+        <div class="space-y-4">
+            <input type="email" id="email-input" placeholder="driver@email.com" 
+                class="w-full p-4 rounded-2xl bg-slate-900 border border-slate-800 text-white focus:ring-2 focus:ring-cyan-500 outline-none">
+            
+            <button id="login-btn" class="w-full p-4 rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 font-black tracking-wide hover:scale-105 active:scale-95 transition-all shadow-lg shadow-cyan-900/20">
+                GET ACCESS KEY
+            </button>
+        </div>
+    </div>
+
+    <div id="garage-ui" class="hidden w-full max-w-md space-y-6">
+        <div class="flex justify-between items-center px-2">
+            <h2 class="neon-font text-xl text-cyan-400 italic">POPKID</h2>
+            <div class="glass px-6 py-2 rounded-2xl neon-border text-right">
+                <p class="text-[8px] text-slate-400 font-bold uppercase tracking-widest">Balance</p>
+                <p class="text-green-400 font-black text-xl">Ksh 12,500.00</p>
+            </div>
+        </div>
+
+        <div class="glass rounded-[2.5rem] p-3 border border-slate-800">
+            <img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800" class="rounded-[2rem] w-full h-64 object-cover">
+            <div class="p-6 text-center">
+                <h3 class="neon-font text-lg mb-4">TOYOTA CROWN</h3>
+                <button class="w-full p-6 rounded-3xl bg-white text-black font-black text-xl hover:bg-cyan-400 transition transform active:scale-90">
+                    START SHIFT
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Your config integrated
+        const firebaseConfig = {
+            apiKey: "AIzaSyDe8i7FOSmuWCUhqwLXb9nBDWQKSIBKJpw",
+            authDomain: "ridesphere-popkid.firebaseapp.com",
+            projectId: "ridesphere-popkid",
+            storageBucket: "ridesphere-popkid.firebasestorage.app",
+            messagingSenderId: "476462103607",
+            appId: "1:476462103607:web:27ec5a2134d5954ac113b2"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // UI Elements
+        const loginBtn = document.getElementById('login-btn');
+        const authUi = document.getElementById('auth-ui');
+        const garageUi = document.getElementById('garage-ui');
+
+        loginBtn.onclick = async () => {
+            const email = document.getElementById('email-input').value;
+            const actionCodeSettings = {
+                url: window.location.href,
+                handleCodeInApp: true,
+            };
+            try {
+                await sendSignInLinkToEmail(auth, email, actionCodeSettings);
+                window.localStorage.setItem('emailForSignIn', email);
+                alert('Access Key sent! Check ' + email);
+            } catch (error) {
+                alert(error.message);
+            }
+        };
+
+        // Logic to handle returning from the email link
+        if (isSignInWithEmailLink(auth, window.location.href)) {
+            let email = window.localStorage.getItem('emailForSignIn');
+            if (!email) email = window.prompt('Confirm your email:');
+            
+            signInWithEmailLink(auth, email, window.location.href)
+                .then(async (result) => {
+                    window.localStorage.removeItem('emailForSignIn');
+                    const userRef = doc(db, "drivers", result.user.email);
+                    const docSnap = await getDoc(userRef);
+                    
+                    if (!docSnap.exists()) {
+                        await setDoc(userRef, { balance: 12500, car: "Toyota Crown" });
+                    }
+                    authUi.classList.add('hidden');
+                    garageUi.classList.remove('hidden');
+                });
+        }
+    </script>
+</body>
+</html>
