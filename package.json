@@ -1,19 +1,31 @@
 {
   "name": "ridesphere-fullstack",
   "version": "1.0.0",
-  "scripts": {
-    "start": "node server.js",
-    "build": "react-scripts build",
-    "test": "react-scripts test"
-  },
+  "private": true,
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
     "axios": "^1.6.0",
-    "@supabase/supabase-js": "^2.39.0",
-    "cors": "^2.8.5",
     "express": "^4.18.2",
-    "nodemailer": "^6.9.7"
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "nodemailer": "^6.9.7",
+    "@supabase/supabase-js": "^2.39.0"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app"
+    ]
+  },
+  "browserslist": {
+    "production": [">0.2%", "not dead", "not op_mini all"],
+    "development": ["last 1 chrome version", "last 1 firefox version", "last 1 safari version"]
   }
 }
