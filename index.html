@@ -3,27 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RideSphere | Live High-Stakes Racing</title>
+    <title>RideSphere | Real-Time Betting</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;900&family=Inter:wght@400;700&display=swap');
-        
-        :root {
-            --neon-blue: #00f2ff;
-            --bg-dark: #05070a;
-        }
-
-        body {
-            background-color: var(--bg-dark);
-            color: white;
-            font-family: 'Inter', sans-serif;
-            overflow: hidden;
-            height: 100vh;
-        }
-
+        :root { --neon-blue: #00f2ff; --bg-dark: #05070a; }
+        body { background-color: var(--bg-dark); color: white; font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; }
         .font-game { font-family: 'Orbitron', sans-serif; }
-
-        /* Game Stage */
+        
         #game-stage {
             position: relative;
             background: radial-gradient(circle at bottom left, #0f172a 0%, #020617 100%);
@@ -37,10 +24,8 @@
             font-size: 5.5rem;
             font-weight: 900;
             text-shadow: 0 0 25px rgba(0, 242, 255, 0.5);
-            transition: color 0.2s;
         }
 
-        /* Animated Road */
         .road {
             position: absolute;
             bottom: 15%;
@@ -50,29 +35,15 @@
             animation: drive 0.5s linear infinite;
         }
 
-        @keyframes drive {
-            from { transform: translateX(0); }
-            to { transform: translateX(-60px); }
-        }
+        @keyframes drive { from { transform: translateX(0); } to { transform: translateX(-60px); } }
 
-        .car-sprite {
-            filter: drop-shadow(0 0 15px var(--neon-blue));
-            transition: all 0.1s linear;
-        }
-
-        .glass {
-            background: rgba(15, 23, 42, 0.7);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .btn-main {
-            background: linear-gradient(90deg, #00f2ff, #0062ff);
-            color: #000;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+        .car-sprite { filter: drop-shadow(0 0 15px var(--neon-blue)); transition: all 0.1s linear; }
+        .glass { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
+        
+        /* Button States */
+        .btn-bet { background: #00f2ff; color: #000; }
+        .btn-cashout { background: #ff9d00; color: #000; }
+        .btn-waiting { background: #1e293b; color: #64748b; cursor: not-allowed; }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -80,9 +51,9 @@
     <div class="max-w-5xl mx-auto flex flex-col h-full">
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-2xl font-game text-cyan-400 italic">RIDESPHERE</h1>
-            <div class="glass px-6 py-2 rounded-2xl flex items-center gap-4">
-                <span class="text-xs text-slate-400 font-bold uppercase">Balance</span>
-                <span id="balance" class="text-xl font-bold text-white">$1,000.00</span>
+            <div class="glass px-6 py-2 rounded-2xl">
+                <span class="text-xs text-slate-400 font-bold uppercase mr-2">Balance</span>
+                <span id="balance-display" class="text-xl font-bold text-white">$1000.00</span>
             </div>
         </div>
 
@@ -90,10 +61,9 @@
             <div class="lg:col-span-2 space-y-4">
                 <div id="game-stage">
                     <div class="absolute inset-0 flex flex-col items-center justify-center z-50">
-                        <div id="multi-val" class="multiplier-text font-game">1.00x</div>
-                        <div id="status-label" class="text-cyan-500 font-bold tracking-widest uppercase opacity-0">Crashed</div>
+                        <div id="multi-val" class="multiplier-text font-game">WAITING</div>
+                        <div id="status-label" class="text-red-500 font-bold tracking-widest uppercase hidden">Crashed!</div>
                     </div>
-
                     <div id="car-container" class="absolute left-10 bottom-[15%] z-40 car-sprite">
                         <svg width="100" height="50" viewBox="0 0 24 24" class="fill-cyan-400">
                             <path d="M18.92 11c-.13-1.05-.63-1.95-1.42-2.55L15 5H9L6.5 8.45C5.7 9.05 5.2 9.95 5.08 11H18.92M19 13H5c-1.1 0-2 .9-2 2v5c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-5c0-1.1-.9-2-2-2M7 18c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m10 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1Z"/>
@@ -105,34 +75,23 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div class="glass p-4 rounded-2xl">
                         <label class="text-[10px] text-slate-400 font-bold uppercase block mb-1">Bet Amount</label>
-                        <input type="number" id="bet-input" value="10.00" class="bg-transparent text-2xl font-bold w-full outline-none">
+                        <input type="number" id="bet-amount" value="10.00" min="1" class="bg-transparent text-2xl font-bold w-full outline-none">
                     </div>
-                    <button id="bet-btn" onclick="handleBet()" class="btn-main rounded-2xl text-2xl">Place Bet</button>
+                    <button id="action-btn" onclick="handleBtnClick()" class="btn-bet rounded-2xl text-2xl font-black italic uppercase">Place Bet</button>
                 </div>
             </div>
 
             <div class="lg:col-span-1 glass rounded-3xl p-6 flex flex-col">
-                <h3 class="text-xs font-bold text-slate-500 uppercase mb-4 tracking-widest">Live History</h3>
-                <div id="history-list" class="space-y-2 overflow-y-auto h-48">
-                    <div class="flex justify-between text-xs bg-slate-900/50 p-2 rounded border-l-2 border-cyan-500">
-                        <span>Round #204</span>
-                        <span class="text-cyan-400 font-bold">2.45x</span>
-                    </div>
-                </div>
-                
-                <div class="mt-auto pt-6 border-t border-slate-800">
-                    <button onclick="authOTP()" class="w-full py-2 rounded-lg bg-slate-800 text-slate-300 text-xs font-bold hover:bg-slate-700 transition">ACTIVATE ACCOUNT (OTP)</button>
-                </div>
+                <h3 class="text-xs font-bold text-slate-500 uppercase mb-4 tracking-widest">Live Activity</h3>
+                <div id="log" class="text-[10px] font-mono space-y-2 overflow-y-auto h-64"></div>
             </div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, sendSignInLinkToEmail } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyDe8i7FOSmuWCUhqwLXb9nBDWQKSIBKJpw",
             authDomain: "ridesphere-popkid.firebaseapp.com",
@@ -143,99 +102,139 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // UI Elements
-        const multiText = document.getElementById('multi-val');
-        const road = document.getElementById('road-anim');
-        const car = document.getElementById('car-container');
-        const statusLabel = document.getElementById('status-label');
-        const betBtn = document.getElementById('bet-btn');
+        // Game State Variables
+        let balance = 1000.00;
+        let currentBet = 0;
+        let isWaitingForNextRound = false; 
+        let hasPlacedBetForThisRound = false;
+        let hasCashedOut = false;
+        let currentMulti = 1.00;
+        let gameActive = false;
 
-        let currentMultiplier = 1.00;
-        let isBetting = false;
+        const btn = document.getElementById('action-btn');
+        const balanceDisplay = document.getElementById('balance-display');
+        const multiDisplay = document.getElementById('multi-val');
 
-        // --- 1. THE GAME CONTROLLER (The "Brain") ---
-        // In a real app, this part runs on a Node.js server. 
-        // Here, it updates Firestore so all users see the same move.
-        async function startNewRound() {
-            let multi = 1.00;
-            const crashPoint = (Math.random() * 3 + 1.1).toFixed(2); // Random crash
-            
-            const roundTimer = setInterval(async () => {
-                if (multi >= crashPoint) {
-                    clearInterval(roundTimer);
-                    await setDoc(doc(db, "game", "live"), { val: multi, crashed: true });
-                    setTimeout(startNewRound, 4000); // 4s wait for next round
-                } else {
-                    multi += 0.01 * (multi / 1.5);
-                    await setDoc(doc(db, "game", "live"), { val: multi, crashed: false });
-                }
-            }, 100);
+        // Update Balance UI
+        function updateBalance(amount) {
+            balance += amount;
+            balanceDisplay.innerText = `$${balance.toFixed(2)}`;
         }
 
-        // --- 2. THE SYNC (Listening to Firestore) ---
+        // --- 1. THE BRAIN (Server Simulator) ---
+        async function runGameEngine() {
+            // Betting Phase (10 seconds)
+            gameActive = false;
+            await setDoc(doc(db, "game", "live"), { state: 'BETTING', val: 0, crashed: false });
+            
+            setTimeout(async () => {
+                // Racing Phase
+                let multi = 1.00;
+                gameActive = true;
+                const crashPoint = (Math.random() * 4 + 1.1).toFixed(2);
+                
+                const timer = setInterval(async () => {
+                    if (multi >= crashPoint) {
+                        clearInterval(timer);
+                        gameActive = false;
+                        await setDoc(doc(db, "game", "live"), { state: 'CRASHED', val: multi, crashed: true });
+                        setTimeout(runGameEngine, 5000); // 5s break
+                    } else {
+                        multi += 0.01 * (multi / 1.2);
+                        await setDoc(doc(db, "game", "live"), { state: 'RACING', val: multi, crashed: false });
+                    }
+                }, 100);
+            }, 8000); // 8 second betting window
+        }
+
+        // --- 2. THE SYNC (Client View) ---
         onSnapshot(doc(db, "game", "live"), (snap) => {
             const data = snap.data();
-            if (!data) return;
+            if(!data) return;
 
-            if (data.crashed) {
-                // CRASH STATE
-                multiText.innerText = data.val.toFixed(2) + "x";
-                multiText.classList.replace('text-white', 'text-red-500');
-                statusLabel.style.opacity = "1";
-                road.style.animationPlayState = "paused";
-                car.style.transform = "rotate(15deg) translateY(-20px)";
-                resetBetUI();
-            } else {
-                // DRIVING STATE
-                multiText.innerText = data.val.toFixed(2) + "x";
-                multiText.classList.replace('text-red-500', 'text-white');
-                statusLabel.style.opacity = "0";
-                road.style.animationPlayState = "running";
+            currentMulti = data.val;
+
+            if (data.state === 'BETTING') {
+                multiDisplay.innerText = "STARTING...";
+                multiDisplay.className = "multiplier-text font-game text-cyan-400";
+                document.getElementById('status-label').classList.add('hidden');
+                resetRoundState();
+            } 
+            else if (data.state === 'RACING') {
+                multiDisplay.innerText = data.val.toFixed(2) + "x";
+                multiDisplay.className = "multiplier-text font-game text-white";
+                // Only allow Cash Out if they bet
+                if (hasPlacedBetForThisRound && !hasCashedOut) {
+                    btn.innerText = `CASH OUT ($${(currentBet * data.val).toFixed(2)})`;
+                    btn.className = "btn-cashout rounded-2xl text-2xl font-black italic uppercase";
+                }
+            } 
+            else if (data.state === 'CRASHED') {
+                multiDisplay.innerText = data.val.toFixed(2) + "x";
+                multiDisplay.className = "multiplier-text font-game text-red-600";
+                document.getElementById('status-label').classList.remove('hidden');
                 
-                // Animate car height and position
-                const driveHeight = (data.val - 1) * 40;
-                const driveForward = (data.val - 1) * 15;
-                car.style.transform = `translate(${driveForward}px, -${driveHeight}px)`;
+                if (hasPlacedBetForThisRound && !hasCashedOut) {
+                    logActivity("LOST: Car crashed before cashout.");
+                }
+                forceResetButton();
             }
-            currentMultiplier = data.val;
         });
 
-        // --- 3. BETTING & AUTH ---
-        window.handleBet = () => {
-            if (!isBetting) {
-                betBtn.innerText = "CASH OUT";
-                betBtn.classList.replace('btn-main', 'bg-orange-500');
-                isBetting = true;
-            } else {
-                alert(`Cashed out at ${currentMultiplier.toFixed(2)}x!`);
-                resetBetUI();
+        // --- 3. PLAYER ACTIONS ---
+        window.handleBtnClick = () => {
+            const betInput = document.getElementById('bet-amount');
+            const betVal = parseFloat(betInput.value);
+
+            // Phase: Place Bet (Before race starts)
+            if (!hasPlacedBetForThisRound && !gameActive) {
+                if (betVal > balance) return alert("Insufficient Balance");
+                
+                currentBet = betVal;
+                updateBalance(-currentBet); // Subtract immediately
+                hasPlacedBetForThisRound = true;
+                hasCashedOut = false;
+                
+                btn.innerText = "WAITING FOR START...";
+                btn.className = "btn-waiting rounded-2xl text-2xl font-black italic uppercase";
+                logActivity(`BET PLACED: $${currentBet}`);
+            } 
+            // Phase: Cash Out (During race)
+            else if (hasPlacedBetForThisRound && !hasCashedOut && gameActive) {
+                const winAmount = currentBet * currentMulti;
+                updateBalance(winAmount);
+                hasCashedOut = true;
+                
+                btn.innerText = "WINNER!";
+                btn.className = "btn-waiting rounded-2xl text-2xl font-black italic uppercase";
+                logActivity(`WIN: $${winAmount.toFixed(2)} at ${currentMulti.toFixed(2)}x`);
             }
         };
 
-        function resetBetUI() {
-            betBtn.innerText = "Place Bet";
-            betBtn.className = "btn-main rounded-2xl text-2xl w-full py-4";
-            isBetting = false;
+        function resetRoundState() {
+            hasPlacedBetForThisRound = false;
+            hasCashedOut = false;
+            btn.innerText = "PLACE BET";
+            btn.className = "btn-bet rounded-2xl text-2xl font-black italic uppercase";
         }
 
-        window.authOTP = async () => {
-            const email = prompt("Enter Gmail for 6-digit Activation:");
-            if (email) {
-                await sendSignInLinkToEmail(auth, email, {
-                    url: window.location.href,
-                    handleCodeInApp: true
-                });
-                alert("Check your Gmail Inbox/Spam!");
+        function forceResetButton() {
+            // If they didn't bet, or round is over
+            if (!hasPlacedBetForThisRound || hasCashedOut || !gameActive) {
+                btn.innerText = "WAITING...";
+                btn.className = "btn-waiting rounded-2xl text-2xl font-black italic uppercase";
             }
-        };
+        }
 
-        // Start the engine if no one else is running it
-        // (Note: In production, remove this call and run it from Node.js)
-        startNewRound();
+        function logActivity(msg) {
+            const log = document.getElementById('log');
+            log.innerHTML = `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>` + log.innerHTML;
+        }
 
+        // Initialize Engine
+        runGameEngine();
     </script>
 </body>
 </html>
