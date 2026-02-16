@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RideSphere | Real-Time Racing</title>
+    <title>RideSphere | Continuous Racing</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Inter:wght@400;700&display=swap');
@@ -11,7 +11,6 @@
         body { background-color: var(--bg-dark); color: white; font-family: 'Inter', sans-serif; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .font-game { font-family: 'Orbitron', sans-serif; }
         
-        /* Game Container */
         #game-stage {
             position: relative;
             background: radial-gradient(circle at bottom left, #0f172a 0%, #020617 100%);
@@ -34,7 +33,7 @@
             width: 200%;
             height: 4px;
             background: repeating-linear-gradient(90deg, #334155 0, #334155 30px, transparent 30px, transparent 60px);
-            display: none; /* Hidden until race starts */
+            display: none;
         }
 
         @keyframes drive { from { transform: translateX(0); } to { transform: translateX(-60px); } }
@@ -43,7 +42,6 @@
         .car-sprite { filter: drop-shadow(0 0 15px var(--neon-blue)); transition: transform 0.1s linear; }
         .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
         
-        /* Interactive Buttons */
         .btn-ready { background: #00f2ff; color: #000; }
         .btn-cashout { background: linear-gradient(to right, #ff9d00, #ff5e00); color: #fff; box-shadow: 0 0 20px rgba(255, 157, 0, 0.4); }
         .btn-locked { background: #1e293b; color: #475569; cursor: not-allowed; }
@@ -78,6 +76,10 @@
             <div class="glass p-4 rounded-3xl md:col-span-1">
                 <label class="text-[10px] text-slate-500 font-bold uppercase block mb-1">Bet Amount</label>
                 <input type="number" id="bet-input" value="10.00" class="bg-transparent text-2xl font-bold w-full outline-none text-white">
+                <div class="flex gap-2 mt-2">
+                    <button onclick="adjustBet(2)" class="text-[10px] bg-slate-800 px-2 py-1 rounded">2x</button>
+                    <button onclick="adjustBet(0.5)" class="text-[10px] bg-slate-800 px-2 py-1 rounded">1/2</button>
+                </div>
             </div>
             <button id="action-btn" onclick="handleAction()" class="btn-ready rounded-3xl md:col-span-2 text-2xl font-black italic uppercase transition-all duration-300">Place Bet</button>
         </div>
@@ -87,7 +89,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyDe8i7FOSmuWCUhqwLXb9nBDWQKSIBKJpw",
             authDomain: "ridesphere-popkid.firebaseapp.com",
@@ -100,7 +101,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // State Variables
+        // Core Player State
         let balance = 1000.00;
         let activeBet = 0;
         let hasBet = false;
@@ -113,14 +114,15 @@
         const car = document.getElementById('car-wrapper');
         const road = document.getElementById('road-anim');
         const crashMsg = document.getElementById('crash-msg');
+        const balanceDisplay = document.getElementById('balance-display');
 
-        // --- THE ENGINE (Triggered by user) ---
+        // --- CONTINUOUS ENGINE ---
         async function startCounting() {
             gameState = 'RACING';
             let multi = 1.00;
-            const crashPoint = (Math.random() * 4 + 1.1).toFixed(2);
+            // Enhanced randomness for the "Real" feel
+            const crashPoint = (Math.random() * (Math.random() > 0.8 ? 10 : 3) + 1.05).toFixed(2);
             
-            // Activate Road
             road.classList.add('animate-road');
 
             const ticker = setInterval(async () => {
@@ -129,15 +131,30 @@
                     gameState = 'CRASHED';
                     await setDoc(doc(db, "game", "live"), { state: 'CRASHED', val: multi });
                     
+                    // COOL DOWN: 3 seconds to see the crash, then reset
                     setTimeout(() => {
-                        setDoc(doc(db, "game", "live"), { state: 'WAITING', val: 0.00 });
-                        resetUI();
-                    }, 4000);
+                        resetGameToWaiting();
+                    }, 3000);
                 } else {
-                    multi += 0.01 * (multi < 2 ? 1 : multi / 1.3);
+                    // Multiplier growth speed
+                    multi += 0.01 * (multi < 2 ? 1.2 : multi / 1.1);
                     await setDoc(doc(db, "game", "live"), { state: 'RACING', val: multi });
                 }
-            }, 60); // Fast 60ms interval
+            }, 50);
+        }
+
+        async function resetGameToWaiting() {
+            gameState = 'WAITING';
+            hasBet = false;
+            hasCashedOut = false;
+            activeBet = 0;
+            
+            await setDoc(doc(db, "game", "live"), { state: 'WAITING', val: 0.00 });
+            
+            // Reset UI for next round
+            btn.innerText = "Place Bet";
+            btn.className = "btn-ready rounded-3xl md:col-span-2 text-2xl font-black italic uppercase";
+            crashMsg.classList.add('hidden');
         }
 
         // --- LIVE SYNC ---
@@ -151,15 +168,13 @@
                 multiDisplay.className = "multiplier-text font-game text-cyan-400 opacity-50";
                 road.classList.remove('animate-road');
                 car.style.transform = `translate(0, 0)`;
-                crashMsg.classList.add('hidden');
             } 
             else if (data.state === 'RACING') {
                 multiDisplay.innerText = data.val.toFixed(2) + "x";
                 multiDisplay.className = "multiplier-text font-game text-white opacity-100";
                 
-                // Car Physics (Ascent)
-                const y = (data.val - 1) * 60;
-                const x = (data.val - 1) * 15;
+                const y = (data.val - 1) * 65;
+                const x = (data.val - 1) * 20;
                 car.style.transform = `translate(${x}px, -${y}px)`;
 
                 if (hasBet && !hasCashedOut) {
@@ -173,51 +188,48 @@
                 crashMsg.classList.remove('hidden');
                 road.classList.remove('animate-road');
                 
-                if (!hasCashedOut && hasBet) {
-                    btn.innerText = "BUSTED!";
+                if (hasBet && !hasCashedOut) {
+                    btn.innerText = "BUSTED";
                     btn.className = "btn-locked rounded-3xl md:col-span-2 text-2xl font-black italic uppercase";
                 }
             }
         });
 
-        // --- PLAYER ACTIONS ---
+        // --- USER ACTIONS ---
         window.handleAction = async () => {
-            const betVal = parseFloat(document.getElementById('bet-input').value);
+            const betInput = document.getElementById('bet-input');
+            const betVal = parseFloat(betInput.value);
 
             if (gameState === 'WAITING' && !hasBet) {
-                if (betVal > balance) return alert("Insufficient funds");
+                if (betVal > balance || betVal <= 0) return alert("Invalid Balance");
                 
-                // Set Local State
                 balance -= betVal;
                 activeBet = betVal;
                 hasBet = true;
-                hasCashedOut = false;
-                document.getElementById('balance-display').innerText = `$${balance.toFixed(2)}`;
+                balanceDisplay.innerText = `$${balance.toFixed(2)}`;
                 
-                btn.innerText = "STARTING...";
+                btn.innerText = "RACING...";
                 btn.className = "btn-locked rounded-3xl md:col-span-2 text-2xl font-black italic uppercase";
-
-                // TRIGER ENGINE IMMEDIATELY
+                
                 await startCounting();
             } 
             else if (gameState === 'RACING' && hasBet && !hasCashedOut) {
                 const win = activeBet * currentMulti;
                 balance += win;
                 hasCashedOut = true;
-                document.getElementById('balance-display').innerText = `$${balance.toFixed(2)}`;
+                balanceDisplay.innerText = `$${balance.toFixed(2)}`;
                 
-                btn.innerText = `WON $${win.toFixed(2)}!`;
+                btn.innerText = `WIN! +$${(win - activeBet).toFixed(2)}`;
                 btn.className = "btn-locked rounded-3xl md:col-span-2 text-2xl font-black italic uppercase";
             }
         };
 
-        function resetUI() {
-            hasBet = false;
-            hasCashedOut = false;
-            gameState = 'WAITING';
-            btn.innerText = "PLACE BET";
-            btn.className = "btn-ready rounded-3xl md:col-span-2 text-2xl font-black italic uppercase";
-        }
+        window.adjustBet = (factor) => {
+            const input = document.getElementById('bet-input');
+            let val = parseFloat(input.value) * factor;
+            if (val > balance) val = balance;
+            input.value = val.toFixed(2);
+        };
     </script>
 </body>
 </html>
