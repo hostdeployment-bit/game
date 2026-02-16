@@ -7,54 +7,72 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Inter:wght@400;700&display=swap');
-        body { background: #020617; color: white; font-family: 'Inter', sans-serif; }
+        body { background: #020617; color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
         .neon-font { font-family: 'Orbitron', sans-serif; }
-        .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(51, 65, 85, 0.5); }
-        .neon-border { box-shadow: 0 0 15px rgba(34, 211, 238, 0.3); border: 1px solid rgba(34, 211, 238, 0.5); }
+        .glass { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .neon-cyan { color: #22d3ee; text-shadow: 0 0 15px rgba(34, 211, 238, 0.6); }
+        .btn-gradient { background: linear-gradient(90deg, #2563eb, #0891b2); }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-4">
 
-    <div id="auth-ui" class="glass p-10 rounded-[3rem] w-full max-w-sm text-center">
-        <h1 class="neon-font text-cyan-400 text-3xl font-black italic tracking-tighter mb-1">RIDESPHERE</h1>
-        <p class="text-slate-500 text-[9px] tracking-[0.3em] mb-12 uppercase font-bold">Popkid Edition</p>
+    <div id="auth-ui" class="glass p-10 rounded-[3rem] w-full max-w-sm text-center shadow-2xl border-t border-cyan-500/30">
+        <h1 class="neon-font neon-cyan text-3xl font-black italic tracking-tighter mb-1">RIDESPHERE</h1>
+        <p class="text-slate-500 text-[9px] tracking-[0.3em] mb-10 uppercase font-bold">Popkid Edition</p>
 
-        <div class="space-y-4">
-            <input type="email" id="email-input" placeholder="driver@email.com" 
-                class="w-full p-4 rounded-2xl bg-slate-900 border border-slate-800 text-white focus:ring-2 focus:ring-cyan-500 outline-none">
+        <div id="signup-form" class="space-y-4">
+            <input type="text" id="reg-username" placeholder="Username" class="w-full p-4 rounded-2xl bg-slate-900 border border-slate-800 focus:border-cyan-500 outline-none">
+            <input type="email" id="reg-email" placeholder="Gmail Address" class="w-full p-4 rounded-2xl bg-slate-900 border border-slate-800 focus:border-cyan-500 outline-none">
+            <input type="password" id="reg-password" placeholder="Password" class="w-full p-4 rounded-2xl bg-slate-900 border border-slate-800 focus:border-cyan-500 outline-none">
             
-            <button id="login-btn" class="w-full p-4 rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-500 font-black tracking-wide hover:scale-105 active:scale-95 transition-all shadow-lg shadow-cyan-900/20">
-                GET ACCESS KEY
+            <button onclick="signUp()" class="btn-gradient w-full p-4 rounded-2xl font-black tracking-wide hover:scale-[1.02] active:scale-95 transition-all">
+                CREATE ACCOUNT
             </button>
+            <p class="text-[10px] text-slate-500">Already have an account? <span class="text-cyan-400 cursor-pointer" onclick="toggleAuth()">Login</span></p>
+        </div>
+
+        <div id="login-form" class="hidden space-y-4">
+            <input type="email" id="login-email" placeholder="Email" class="w-full p-4 rounded-2xl bg-slate-900 border border-slate-800 focus:border-cyan-500 outline-none">
+            <input type="password" id="login-password" placeholder="Password" class="w-full p-4 rounded-2xl bg-slate-900 border border-slate-800 focus:border-cyan-500 outline-none">
+            <button onclick="login()" class="btn-gradient w-full p-4 rounded-2xl font-black tracking-wide">
+                SIGN IN
+            </button>
+            <p class="text-[10px] text-slate-500">New driver? <span class="text-cyan-400 cursor-pointer" onclick="toggleAuth()">Sign Up</span></p>
         </div>
     </div>
 
-    <div id="garage-ui" class="hidden w-full max-w-md space-y-6">
-        <div class="flex justify-between items-center px-2">
-            <h2 class="neon-font text-xl text-cyan-400 italic">POPKID</h2>
-            <div class="glass px-6 py-2 rounded-2xl neon-border text-right">
-                <p class="text-[8px] text-slate-400 font-bold uppercase tracking-widest">Balance</p>
-                <p class="text-green-400 font-black text-xl">Ksh 12,500.00</p>
+    <div id="garage-ui" class="hidden w-full max-w-md animate-in fade-in duration-700">
+        <div class="flex justify-between items-end mb-8 px-2">
+            <div>
+                <h2 class="text-slate-500 text-[10px] font-bold tracking-widest uppercase">Verified Driver</h2>
+                <h1 id="user-display" class="neon-font text-2xl italic neon-cyan">POPKID</h1>
+            </div>
+            <div class="glass px-6 py-3 rounded-2xl border-cyan-500/20 text-right">
+                <p class="text-[9px] text-slate-500 font-bold mb-1">BALANCE</p>
+                <p id="balance-display" class="text-green-400 font-black text-xl">Ksh 12,500.00</p>
             </div>
         </div>
 
-        <div class="glass rounded-[2.5rem] p-3 border border-slate-800">
-            <img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800" class="rounded-[2rem] w-full h-64 object-cover">
-            <div class="p-6 text-center">
-                <h3 class="neon-font text-lg mb-4">TOYOTA CROWN</h3>
-                <button class="w-full p-6 rounded-3xl bg-white text-black font-black text-xl hover:bg-cyan-400 transition transform active:scale-90">
+        <div class="glass rounded-[2.5rem] p-3 border border-white/5">
+            <img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800" class="rounded-[2rem] w-full h-56 object-cover mb-6">
+            <div class="px-4 pb-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="neon-font text-lg uppercase">Toyota Crown</h3>
+                    <span class="text-[9px] bg-cyan-500/10 text-cyan-400 px-3 py-1 rounded-full border border-cyan-500/30 font-bold">LEGENDARY</span>
+                </div>
+                <button class="w-full p-6 rounded-3xl bg-white text-black font-black text-xl hover:bg-cyan-400 transition transform active:scale-95 shadow-2xl">
                     START SHIFT
                 </button>
             </div>
         </div>
+        <button onclick="logout()" class="w-full text-slate-600 text-[10px] uppercase font-bold mt-4 tracking-widest">Sign Out</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, onAuthStateChanged, signOut, reload } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // Your config integrated
         const firebaseConfig = {
             apiKey: "AIzaSyDe8i7FOSmuWCUhqwLXb9nBDWQKSIBKJpw",
             authDomain: "ridesphere-popkid.firebaseapp.com",
@@ -68,44 +86,65 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // UI Elements
-        const loginBtn = document.getElementById('login-btn');
-        const authUi = document.getElementById('auth-ui');
-        const garageUi = document.getElementById('garage-ui');
-
-        loginBtn.onclick = async () => {
-            const email = document.getElementById('email-input').value;
-            const actionCodeSettings = {
-                url: window.location.href,
-                handleCodeInApp: true,
-            };
-            try {
-                await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-                window.localStorage.setItem('emailForSignIn', email);
-                alert('Access Key sent! Check ' + email);
-            } catch (error) {
-                alert(error.message);
-            }
+        // UI Toggler
+        window.toggleAuth = () => {
+            document.getElementById('signup-form').classList.toggle('hidden');
+            document.getElementById('login-form').classList.toggle('hidden');
         };
 
-        // Logic to handle returning from the email link
-        if (isSignInWithEmailLink(auth, window.location.href)) {
-            let email = window.localStorage.getItem('emailForSignIn');
-            if (!email) email = window.prompt('Confirm your email:');
-            
-            signInWithEmailLink(auth, email, window.location.href)
-                .then(async (result) => {
-                    window.localStorage.removeItem('emailForSignIn');
-                    const userRef = doc(db, "drivers", result.user.email);
-                    const docSnap = await getDoc(userRef);
-                    
-                    if (!docSnap.exists()) {
-                        await setDoc(userRef, { balance: 12500, car: "Toyota Crown" });
-                    }
-                    authUi.classList.add('hidden');
-                    garageUi.classList.remove('hidden');
+        // SIGN UP LOGIC
+        window.signUp = async () => {
+            const email = document.getElementById('reg-email').value;
+            const pass = document.getElementById('reg-password').value;
+            const user = document.getElementById('reg-username').value;
+
+            if(!user || !email || !pass) return alert("Fill all fields, Popkid!");
+
+            try {
+                const cred = await createUserWithEmailAndPassword(auth, email, pass);
+                // 1. Send Verification Link to Gmail
+                await sendEmailVerification(cred.user);
+                // 2. Save Initial Balance (12,500 Ksh)
+                await setDoc(doc(db, "drivers", cred.user.uid), {
+                    username: user,
+                    balance: 12500,
+                    verified: false
                 });
-        }
+                alert("Account created! Go to your Gmail and click the link to verify.");
+            } catch (err) { alert(err.message); }
+        };
+
+        // LOGIN LOGIC
+        window.login = async () => {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-password').value;
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+            } catch (err) { alert(err.message); }
+        };
+
+        // AUTH STATE OBSERVER
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                await reload(user); // Check if they just verified
+                if (user.emailVerified) {
+                    const docSnap = await getDoc(doc(db, "drivers", user.uid));
+                    if(docSnap.exists()) {
+                        document.getElementById('user-display').innerText = docSnap.data().username;
+                        document.getElementById('balance-display').innerText = "Ksh " + docSnap.data().balance.toLocaleString();
+                        document.getElementById('auth-ui').classList.add('hidden');
+                        document.getElementById('garage-ui').classList.remove('hidden');
+                    }
+                } else {
+                    alert("Account found! But you MUST verify your Gmail link first.");
+                    await signOut(auth);
+                }
+            }
+        });
+
+        window.logout = () => {
+            signOut(auth).then(() => location.reload());
+        };
     </script>
 </body>
 </html>
