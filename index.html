@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RIDESPHERE | LIVE CRASH</title>
+    <title>RIDESPHERE | OFFICIAL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Inter:wght@400;700&display=swap');
@@ -11,82 +11,76 @@
         .neon-font { font-family: 'Orbitron', sans-serif; }
         .glass { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .neon-text { color: #22d3ee; text-shadow: 0 0 15px rgba(34, 211, 238, 0.6); }
-        #game-area { 
-            background: radial-gradient(circle at bottom left, #1e293b 0%, #020617 100%); 
-            background-size: 40px 40px; 
-            background-image: linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px); 
-        }
+        #game-area { background: radial-gradient(circle at bottom left, #1e293b 0%, #020617 100%); background-size: 40px 40px; background-image: linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px); }
         .car-sprite { transition: transform 60ms linear; filter: drop-shadow(0 0 15px #22d3ee); }
         .crashed-anim { animation: explode 0.2s forwards; }
-        @keyframes explode {
-            0% { transform: scale(1); filter: brightness(2); }
-            100% { transform: scale(1.2) rotate(5deg); filter: brightness(1) grayscale(1) opacity(0.5); }
-        }
+        @keyframes explode { 0% { transform: scale(1); filter: brightness(2); } 100% { transform: scale(1.2) rotate(5deg); filter: brightness(1) grayscale(1) opacity(0.5); } }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-4">
 
     <div id="auth-ui" class="glass p-10 rounded-[3rem] w-full max-w-sm text-center shadow-2xl">
         <h1 class="neon-font neon-text text-3xl font-black italic mb-1">RIDESPHERE</h1>
-        <div class="space-y-4 mt-8">
-            <input type="email" id="email" placeholder="Email" class="w-full p-4 rounded-2xl bg-slate-900 border border-slate-800 outline-none">
-            <input type="password" id="pass" placeholder="Password" class="w-full p-4 rounded-2xl bg-slate-900 border border-slate-800 outline-none">
-            <button onclick="handleAuth('login')" class="bg-cyan-600 w-full p-4 rounded-2xl font-black uppercase">Login</button>
-            <button onclick="handleAuth('signup')" class="w-full text-[10px] text-slate-500 uppercase font-bold mt-2 tracking-widest">Join & Get 100 Free Coins</button>
+        
+        <div id="signup-form" class="space-y-4 mt-8">
+            <input type="text" id="reg-user" placeholder="Username" class="w-full p-4 rounded-2xl bg-slate-900 border border-slate-800 outline-none">
+            <input type="email" id="reg-email" placeholder="Gmail Address" class="w-full p-4 rounded-2xl bg-slate-900 border border-slate-800 outline-none">
+            <input type="password" id="reg-pass" placeholder="Password" class="w-full p-4 rounded-2xl bg-slate-900 border border-slate-800 outline-none">
+            <button onclick="signUp()" class="bg-cyan-600 w-full p-4 rounded-2xl font-black uppercase">Create Account</button>
+            <p class="text-[10px] text-slate-500">Already a driver? <span class="text-cyan-400 cursor-pointer font-bold" onclick="toggleAuth()">Login</span></p>
+        </div>
+
+        <div id="login-form" class="hidden space-y-4 mt-8">
+            <input type="email" id="login-email" placeholder="Email" class="w-full p-4 rounded-2xl bg-slate-900 border border-slate-800 outline-none">
+            <input type="password" id="login-pass" placeholder="Password" class="w-full p-4 rounded-2xl bg-slate-900 border border-slate-800 outline-none">
+            <button onclick="login()" class="bg-cyan-600 w-full p-4 rounded-2xl font-black uppercase">Sign In</button>
+            <p class="text-[10px] text-slate-500">New driver? <span class="text-cyan-400 cursor-pointer font-bold" onclick="toggleAuth()">Sign Up</span></p>
         </div>
     </div>
 
     <div id="admin-ui" class="hidden w-full max-w-4xl mb-6">
         <div class="glass p-6 rounded-[2.5rem] border-red-500/40">
-            <h2 class="neon-font text-red-500 mb-4 text-sm">ADMIN CONTROL (GOD MODE)</h2>
+            <h2 class="neon-font text-red-500 mb-4 text-sm">ADMIN GOD MODE</h2>
             <div class="grid md:grid-cols-2 gap-4">
                 <div class="space-y-2">
-                    <p class="text-[10px] text-slate-400 uppercase font-bold">Set Next Crash (e.g., 1.50)</p>
+                    <p class="text-[10px] text-slate-400 uppercase font-bold">Set Next Crash Multiplier</p>
                     <div class="flex gap-2">
                         <input type="number" id="admin-crash-set" step="0.01" value="2.00" class="flex-1 bg-black p-3 rounded-xl border border-red-500/30 text-red-500 font-bold">
                         <button onclick="lockCrash()" class="bg-red-600 px-6 py-2 rounded-xl font-bold text-xs">LOCK RIG</button>
                     </div>
                 </div>
-                <div id="admin-user-list" class="space-y-2 max-h-[100px] overflow-y-auto"></div>
+                <div id="admin-user-list" class="space-y-2 max-h-[150px] overflow-y-auto pr-2"></div>
             </div>
-            <button onclick="toggleAdminView()" class="mt-4 w-full text-[10px] text-slate-500 font-bold">BACK TO GAME</button>
+            <button onclick="toggleAdminView()" class="mt-4 w-full text-[10px] text-slate-500 font-bold uppercase">Back to Game View</button>
         </div>
     </div>
 
     <div id="game-ui" class="hidden w-full max-w-4xl space-y-4">
         <div class="flex justify-between items-center glass p-5 rounded-3xl">
-            <div>
-                <p id="role-tag" class="text-[9px] text-slate-500 font-bold uppercase">Verified Driver</p>
-                <h2 id="p-name" class="neon-font text-cyan-400">...</h2>
-            </div>
-            <div class="text-right">
-                <p class="text-[9px] text-slate-500 font-bold uppercase">Current Balance</p>
-                <h2 id="p-balance" class="text-green-400 font-black text-2xl">Ksh 0</h2>
-            </div>
+            <div><h2 id="p-name" class="neon-font text-cyan-400 italic">...</h2></div>
+            <div class="text-right"><p class="text-[9px] text-slate-500 font-bold">BALANCE</p><h2 id="p-balance" class="text-green-400 font-black text-2xl">Ksh 0</h2></div>
         </div>
 
         <div id="game-area" class="relative w-full h-[380px] rounded-[3rem] border border-white/5 flex items-center justify-center overflow-hidden">
-            <div id="mult-display" class="neon-font text-8xl italic font-black text-white z-10 select-none">1.00x</div>
-            
+            <div id="mult-display" class="neon-font text-8xl italic font-black text-white z-10">1.00x</div>
             <div id="car" class="car-sprite absolute bottom-10 left-10 w-32">
                 <svg viewBox="0 0 100 50" fill="none"><path d="M10 30L20 15H70L90 30H10Z" fill="#22d3ee"/><rect x="15" y="30" width="70" height="10" fill="#0891b2"/><circle cx="25" cy="40" r="7" fill="#020617" stroke="#22d3ee"/></svg>
             </div>
         </div>
 
         <div class="grid md:grid-cols-2 gap-4">
-            <div class="glass p-6 rounded-[2.5rem]">
-                <p class="text-[10px] text-slate-500 font-bold mb-2 uppercase text-center">Stake Amount (Ksh)</p>
+            <div class="glass p-6 rounded-[2.5rem] text-center">
+                <p class="text-[10px] text-slate-500 font-bold mb-2">STAKE AMOUNT</p>
                 <div class="flex items-center gap-4 mb-4">
-                    <button onclick="adjustStake(-10)" class="bg-slate-800 w-12 h-12 rounded-full font-bold">-</button>
+                    <button onclick="adjStake(-10)" class="bg-slate-800 w-12 h-12 rounded-full font-bold">-</button>
                     <input type="number" id="stake-amt" value="10" class="flex-1 bg-transparent text-center text-4xl font-black outline-none">
-                    <button onclick="adjustStake(10)" class="bg-slate-800 w-12 h-12 rounded-full font-bold">+</button>
+                    <button onclick="adjStake(10)" class="bg-slate-800 w-12 h-12 rounded-full font-bold">+</button>
                 </div>
-                <button id="bet-btn" onclick="togglePlay()" class="w-full py-6 rounded-3xl bg-green-500 text-black font-black text-2xl uppercase transition-all shadow-lg active:scale-95">Bet</button>
+                <button id="bet-btn" onclick="togglePlay()" class="w-full py-6 rounded-3xl bg-green-500 text-black font-black text-2xl uppercase shadow-lg">Bet</button>
             </div>
-            
-            <div class="glass p-6 rounded-[2.5rem] flex flex-col justify-around">
-                <button onclick="alert('M-PESA: Send to Admin')" class="text-cyan-400 font-bold text-sm uppercase tracking-widest">Deposit</button>
-                <button id="admin-access-btn" onclick="toggleAdminView()" class="hidden text-red-500 font-bold text-[10px] uppercase">Open Admin Rig</button>
+            <div class="glass p-6 rounded-[2.5rem] flex flex-col justify-around text-center">
+                <button onclick="alert('Contact Admin for Deposit')" class="text-cyan-400 font-bold text-sm uppercase">Deposit</button>
+                <button id="admin-access-btn" onclick="toggleAdminView()" class="hidden text-red-500 font-bold text-[10px] uppercase">Open Rigging Panel</button>
                 <button onclick="logout()" class="text-slate-600 text-[10px] font-bold uppercase">Log Out</button>
             </div>
         </div>
@@ -94,8 +88,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, updateDoc, increment, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification, onAuthStateChanged, signOut, reload } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, updateDoc, increment, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDe8i7FOSmuWCUhqwLXb9nBDWQKSIBKJpw",
@@ -113,123 +107,138 @@
 
         let currentBalance = 0, mult = 1.0, isPlaying = false, hasCashed = false, gameLoop, stake = 0;
 
-        window.handleAuth = async (type) => {
-            const e = document.getElementById('email').value, p = document.getElementById('pass').value;
+        // AUTH FUNCTIONS
+        window.toggleAuth = () => {
+            document.getElementById('signup-form').classList.toggle('hidden');
+            document.getElementById('login-form').classList.toggle('hidden');
+        };
+
+        window.signUp = async () => {
+            const user = document.getElementById('reg-user').value;
+            const email = document.getElementById('reg-email').value;
+            const pass = document.getElementById('reg-pass').value;
+            if(!user || !email || !pass) return alert("Fill all fields!");
             try {
-                if (type === 'signup') {
-                    const c = await createUserWithEmailAndPassword(auth, e, p);
-                    await setDoc(doc(db, "drivers", c.user.uid), { username: e.split('@')[0], balance: 100 });
-                } else { await signInWithEmailAndPassword(auth, e, p); }
+                const cred = await createUserWithEmailAndPassword(auth, email, pass);
+                await sendEmailVerification(cred.user);
+                await setDoc(doc(db, "drivers", cred.user.uid), { username: user, balance: 100 });
+                alert("Verification link sent to Gmail!");
+                await signOut(auth);
+            } catch (err) { alert(err.message); }
+        };
+
+        window.login = async () => {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-pass').value;
+            try {
+                const cred = await signInWithEmailAndPassword(auth, email, pass);
+                await reload(cred.user);
+                if (!cred.user.emailVerified) {
+                    alert("Please verify your Gmail first!");
+                    await signOut(auth);
+                }
             } catch (err) { alert(err.message); }
         };
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                document.getElementById('auth-ui').classList.add('hidden');
-                document.getElementById('game-ui').classList.remove('hidden');
-                if (user.email === ADMIN_EMAIL) {
-                    document.getElementById('admin-access-btn').classList.remove('hidden');
-                    document.getElementById('role-tag').innerText = "System Admin";
-                    document.getElementById('role-tag').classList.add('text-red-500');
-                }
-                onSnapshot(doc(db, "drivers", user.uid), (s) => {
-                    if (s.exists()) {
-                        currentBalance = s.data().balance;
-                        document.getElementById('p-name').innerText = s.data().username;
-                        document.getElementById('p-balance').innerText = "Ksh " + currentBalance.toLocaleString();
+                await reload(user);
+                if (user.emailVerified) {
+                    document.getElementById('auth-ui').classList.add('hidden');
+                    document.getElementById('game-ui').classList.remove('hidden');
+                    if (user.email === ADMIN_EMAIL) {
+                        document.getElementById('admin-access-btn').classList.remove('hidden');
+                        loadAdminUserList();
                     }
-                });
+                    onSnapshot(doc(db, "drivers", user.uid), (s) => {
+                        if (s.exists()) {
+                            currentBalance = s.data().balance;
+                            document.getElementById('p-name').innerText = s.data().username;
+                            document.getElementById('p-balance').innerText = "Ksh " + currentBalance.toLocaleString();
+                        }
+                    });
+                }
             } else {
                 document.getElementById('auth-ui').classList.remove('hidden');
                 document.getElementById('game-ui').classList.add('hidden');
+                document.getElementById('admin-ui').classList.add('hidden');
             }
         });
 
-        window.adjustStake = (v) => {
-            let s = document.getElementById('stake-amt');
-            s.value = Math.max(1, parseInt(s.value) + v);
-        };
-
+        // ADMIN RIGGING
         window.lockCrash = async () => {
             const val = parseFloat(document.getElementById('admin-crash-set').value);
             await setDoc(doc(db, "settings", "engine"), { nextCrash: val });
             alert("Rigged at " + val + "x");
         };
 
+        async function loadAdminUserList() {
+            const snap = await getDocs(collection(db, "drivers")), list = document.getElementById('admin-user-list');
+            list.innerHTML = "";
+            snap.forEach(uDoc => {
+                const d = uDoc.data();
+                const div = document.createElement('div');
+                div.className = "flex justify-between items-center bg-slate-900/50 p-2 rounded-lg";
+                div.innerHTML = `<span class='text-[10px]'>${d.username}</span>
+                    <div class='flex gap-1'><input type='number' id='inp-${uDoc.id}' value='${d.balance}' class='w-16 bg-black text-green-400 text-xs p-1 rounded text-center'>
+                    <button onclick="updateUserBal('${uDoc.id}')" class='bg-cyan-600 px-2 rounded text-[8px]'>SET</button></div>`;
+                list.appendChild(div);
+            });
+        }
+        window.updateUserBal = async (uid) => {
+            const val = parseInt(document.getElementById(`inp-${uid}`).value);
+            await updateDoc(doc(db, "drivers", uid), { balance: val });
+        };
+
+        // GAME LOGIC
+        window.adjStake = (v) => { let s = document.getElementById('stake-amt'); s.value = Math.max(1, parseInt(s.value) + v); };
+        
         window.togglePlay = async () => {
             if (isPlaying) { cashOut(); return; }
-            
             stake = parseInt(document.getElementById('stake-amt').value);
-            if (stake > currentBalance) return alert("Low Balance!");
-
-            // DEDUCT BALANCE IMMEDIATELY
+            if (stake > currentBalance || stake <= 0) return alert("Invalid Balance!");
             await updateDoc(doc(db, "drivers", auth.currentUser.uid), { balance: increment(-stake) });
-            
             startLiveGame();
         };
 
         async function startLiveGame() {
             isPlaying = true; hasCashed = false; mult = 1.0;
-            const btn = document.getElementById('bet-btn');
-            const car = document.getElementById('car');
-            const disp = document.getElementById('mult-display');
-            
-            btn.innerText = "CASH OUT";
-            btn.className = "w-full py-6 rounded-3xl bg-orange-500 text-white font-black text-2xl uppercase";
+            const btn = document.getElementById('bet-btn'), car = document.getElementById('car'), disp = document.getElementById('mult-display');
+            btn.innerText = "CASH OUT"; btn.className = "w-full py-6 rounded-3xl bg-orange-500 text-white font-black text-2xl uppercase";
             car.classList.remove('crashed-anim');
-
-            // GET RIGGED DATA
             const rigDoc = await getDoc(doc(db, "settings", "engine"));
-            const crashPoint = rigDoc.exists() ? rigDoc.data().nextCrash : (Math.random() * 4 + 1.1).toFixed(2);
-
+            const crashPoint = rigDoc.exists() ? rigDoc.data().nextCrash : (Math.random() * 5 + 1.1).toFixed(2);
             let startTime = Date.now();
-
             gameLoop = setInterval(() => {
                 let elapsed = (Date.now() - startTime) / 1000;
-                // AVIATOR GROWTH FORMULA: Multiplier grows faster over time
-                mult = Math.pow(1.08, elapsed * 2);
-                
+                mult = Math.pow(1.08, elapsed * 2.2); // Faster curve
                 disp.innerText = mult.toFixed(2) + "x";
-                
-                // Live Movement
-                let x = (mult - 1) * 70;
-                let y = (mult - 1) * 35;
-                car.style.transform = `translate(${x}px, -${y}px)`;
-
-                if (mult >= crashPoint) {
-                    crash();
-                }
-            }, 50);
+                car.style.transform = `translate(${(mult-1)*60}px, -${(mult-1)*30}px)`;
+                if (mult >= crashPoint) crash();
+            }, 60);
         }
 
         function crash() {
-            clearInterval(gameLoop);
-            isPlaying = false;
+            clearInterval(gameLoop); isPlaying = false;
             document.getElementById('car').classList.add('crashed-anim');
             document.getElementById('mult-display').classList.add('text-red-500');
-            const btn = document.getElementById('bet-btn');
-            btn.innerText = "FLEW AWAY!";
-            btn.className = "w-full py-6 rounded-3xl bg-slate-800 text-slate-500 font-black text-2xl uppercase";
-
+            document.getElementById('bet-btn').innerText = "CRASHED!";
             setTimeout(() => {
                 document.getElementById('mult-display').classList.remove('text-red-500');
                 document.getElementById('mult-display').innerText = "1.00x";
                 document.getElementById('car').style.transform = "translate(0,0)";
-                btn.innerText = "BET";
-                btn.className = "w-full py-6 rounded-3xl bg-green-500 text-black font-black text-2xl uppercase";
+                document.getElementById('bet-btn').innerText = "BET";
+                document.getElementById('bet-btn').className = "w-full py-6 rounded-3xl bg-green-500 text-black font-black text-2xl uppercase";
             }, 3000);
         }
 
         async function cashOut() {
             if (hasCashed || !isPlaying) return;
-            hasCashed = true;
-            
+            hasCashed = true; isPlaying = false; clearInterval(gameLoop);
             const win = Math.floor(stake * mult);
             await updateDoc(doc(db, "drivers", auth.currentUser.uid), { balance: increment(win) });
-            
-            const btn = document.getElementById('bet-btn');
-            btn.innerText = "WIN Ksh " + win;
-            btn.className = "w-full py-6 rounded-3xl bg-blue-600 text-white font-black text-2xl uppercase shadow-[0_0_20px_rgba(37,99,235,0.6)]";
+            document.getElementById('bet-btn').innerText = "WIN Ksh " + win;
+            document.getElementById('bet-btn').className = "w-full py-6 rounded-3xl bg-blue-600 text-white font-black text-2xl uppercase";
         }
 
         window.toggleAdminView = () => document.getElementById('admin-ui').classList.toggle('hidden');
