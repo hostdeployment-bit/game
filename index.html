@@ -3,62 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RIDESPHERE | PRO EDITION</title>
+    <title>RIDESPHERE | PRO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Inter:wght@400;700&display=swap');
-        body { background: #020617; color: white; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        body { background: #020617; color: white; font-family: 'Inter', sans-serif; }
         .neon-font { font-family: 'Orbitron', sans-serif; }
         .glass { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
         .neon-text { color: #22d3ee; text-shadow: 0 0 15px rgba(34, 211, 238, 0.6); }
-        .btn-gradient { background: linear-gradient(90deg, #2563eb, #0891b2); }
         #game-area { background: radial-gradient(circle at center, #1e293b 0%, #020617 100%); background-size: 30px 30px; background-image: linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px); }
         .car-sprite { transition: transform 0.1s linear; filter: drop-shadow(0 0 10px #22d3ee); }
         .crashed { animation: shake 0.1s infinite; filter: grayscale(1) opacity(0.5); }
         @keyframes shake { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-2px, -1px); } 100% { transform: translate(1px, 1px); } }
-        .history-pill { animation: slideIn 0.3s ease-out; }
-        @keyframes slideIn { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen p-4">
 
     <div id="auth-ui" class="glass p-10 rounded-[3rem] w-full max-w-sm text-center shadow-2xl">
         <h1 class="neon-font neon-text text-3xl font-black italic mb-1">RIDESPHERE</h1>
-        <p class="text-slate-500 text-[9px] mb-10 uppercase font-bold tracking-widest">Popkid Edition</p>
-        <div id="login-form" class="space-y-4">
+        <div id="login-form" class="space-y-4 mt-8">
             <input type="email" id="email" placeholder="Email" class="w-full p-4 rounded-2xl bg-slate-900 border border-slate-800 outline-none">
             <input type="password" id="pass" placeholder="Password" class="w-full p-4 rounded-2xl bg-slate-900 border border-slate-800 outline-none">
-            <button onclick="handleAuth('login')" class="btn-gradient w-full p-4 rounded-2xl font-black uppercase">Enter Arena</button>
-            <button onclick="handleAuth('signup')" class="w-full text-[10px] text-slate-500 uppercase font-bold mt-2">New Account</button>
+            <button onclick="handleAuth('login')" class="bg-cyan-600 w-full p-4 rounded-2xl font-black uppercase">Login</button>
+            <button onclick="handleAuth('signup')" class="w-full text-[10px] text-slate-500 uppercase font-bold mt-2">Sign Up (Get 100 Free Coins)</button>
         </div>
     </div>
 
-    <div id="admin-ui" class="hidden w-full max-w-4xl space-y-6">
-        <div class="flex justify-between items-center glass p-6 rounded-[2rem] border-red-500/30">
-            <h1 class="neon-font text-red-500 text-2xl uppercase">System Admin</h1>
-            <button onclick="logout()" class="text-xs font-bold text-slate-500">SIGN OUT</button>
-        </div>
-        <div class="grid md:grid-cols-2 gap-6">
-            <div class="glass p-6 rounded-[2.5rem]">
-                <h2 class="neon-font text-cyan-400 mb-4 text-xs">Driver Database</h2>
-                <div id="admin-user-list" class="space-y-3 max-h-[400px] overflow-y-auto pr-2"></div>
+    <div id="admin-ui" class="hidden w-full max-w-4xl mb-6">
+        <div class="glass p-6 rounded-[2.5rem] border-red-500/30">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="neon-font text-red-500">Admin God Mode</h2>
+                <button onclick="toggleAdminPlay()" class="bg-white text-black px-4 py-2 rounded-full font-bold text-xs">Switch to Game</button>
             </div>
-            <div class="glass p-6 rounded-[2.5rem]">
-                <h2 class="neon-font text-orange-500 mb-4 text-xs">Crash Settings</h2>
-                <input type="number" id="next-crash" value="2.5" step="0.1" class="w-full bg-slate-900 p-4 rounded-2xl border border-slate-800 text-3xl font-black text-orange-500 text-center">
-                <p class="text-[10px] text-slate-500 mt-2 text-center uppercase">Force next crash at this multiplier</p>
-                <button onclick="saveAdminSettings()" class="w-full mt-4 py-4 bg-orange-600 rounded-2xl font-bold uppercase">Lock Result</button>
-            </div>
+            <div id="admin-user-list" class="space-y-3 max-h-[300px] overflow-y-auto pr-2"></div>
         </div>
     </div>
 
     <div id="game-ui" class="hidden w-full max-w-4xl space-y-4">
-        <div id="history-bar" class="flex gap-2 overflow-x-auto py-2 no-scrollbar">
-            </div>
+        <div id="history-bar" class="flex gap-2 overflow-x-auto py-2"></div>
 
         <div class="flex justify-between items-center glass p-5 rounded-3xl">
-            <div><p class="text-[9px] text-slate-500 font-bold uppercase">Driver</p><h2 id="p-name" class="neon-font text-cyan-400">...</h2></div>
-            <div class="text-right"><p class="text-[9px] text-slate-500 font-bold uppercase">Balance</p><h2 id="p-balance" class="text-green-400 font-black text-2xl">Ksh 0</h2></div>
+            <div>
+                <p id="admin-tag" class="text-[9px] text-red-500 font-black uppercase hidden">System Admin</p>
+                <h2 id="p-name" class="neon-font text-cyan-400">...</h2>
+            </div>
+            <div class="text-right">
+                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Balance</p>
+                <h2 id="p-balance" class="text-green-400 font-black text-2xl">Ksh 0</h2>
+            </div>
         </div>
 
         <div id="game-area" class="relative w-full h-[350px] rounded-[2.5rem] border border-white/5 flex items-center justify-center overflow-hidden">
@@ -70,26 +62,21 @@
 
         <div class="grid md:grid-cols-2 gap-4">
             <div class="glass p-6 rounded-[2.5rem] flex flex-col items-center">
-                <div class="flex items-center gap-4 mb-4">
-                    <button onclick="adj( -50)" class="bg-slate-800 px-4 py-2 rounded-lg">-</button>
-                    <input type="number" id="bet-amt" value="100" class="bg-transparent text-center text-3xl font-black w-32 outline-none">
-                    <button onclick="adj(50)" class="bg-slate-800 px-4 py-2 rounded-lg">+</button>
-                </div>
-                <button id="bet-btn" onclick="placeBet()" class="w-full py-6 rounded-3xl bg-green-500 text-black font-black text-2xl uppercase shadow-xl hover:scale-[1.02] active:scale-95 transition-all">Place Bet</button>
+                <input type="number" id="bet-amt" value="10" class="bg-transparent text-center text-3xl font-black w-full mb-4 outline-none">
+                <button id="bet-btn" onclick="placeBet()" class="w-full py-6 rounded-3xl bg-green-500 text-black font-black text-2xl uppercase">Place Bet</button>
             </div>
-            <div class="glass p-6 rounded-[2.5rem] flex flex-col justify-center gap-4">
-                <div class="flex justify-between text-xs font-bold uppercase tracking-tighter">
-                    <button class="text-cyan-400" onclick="alert('M-Pesa Deposit: Send to 07XXXXXXXX')">Deposit</button>
-                    <button class="text-slate-400" onclick="logout()">Sign Out</button>
-                </div>
+            <div class="glass p-6 rounded-[2.5rem] flex flex-col justify-center gap-2">
+                <button onclick="alert('Lipa na M-Pesa coming soon!')" class="text-cyan-400 font-bold text-sm uppercase">Deposit</button>
+                <button id="admin-btn-back" onclick="toggleAdminPlay()" class="text-red-500 font-bold text-[10px] uppercase hidden">Admin Panel</button>
+                <button onclick="logout()" class="text-slate-600 text-[10px] font-bold uppercase">Sign Out</button>
             </div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, reload } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot, updateDoc, increment, collection, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, updateDoc, increment, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDe8i7FOSmuWCUhqwLXb9nBDWQKSIBKJpw",
@@ -105,86 +92,101 @@
         const db = getFirestore(app);
         const ADMIN_EMAIL = "iantaracha@gmail.com";
 
-        let currentBalance = 0, multiplier = 1.0, isPlaying = false, hasCashedOut = false, currentBet = 0, gameLoop, history = [];
+        let currentBalance = 0, multiplier = 1.0, isPlaying = false, hasCashedOut = false, currentBet = 0, gameLoop;
 
         window.handleAuth = async (type) => {
             const e = document.getElementById('email').value, p = document.getElementById('pass').value;
             try {
                 if (type === 'signup') {
                     const c = await createUserWithEmailAndPassword(auth, e, p);
-                    await setDoc(doc(db, "drivers", c.user.uid), { username: e.split('@')[0], balance: 0 });
+                    // NEW PLAYER STARTING WITH 100 FREE COINS
+                    await setDoc(doc(db, "drivers", c.user.uid), { username: e.split('@')[0], balance: 100 });
                 } else { await signInWithEmailAndPassword(auth, e, p); }
             } catch (err) { alert(err.message); }
         };
 
         onAuthStateChanged(auth, async (user) => {
-            const ui = { auth: document.getElementById('auth-ui'), admin: document.getElementById('admin-ui'), game: document.getElementById('game-ui') };
             if (user) {
-                ui.auth.classList.add('hidden');
+                document.getElementById('auth-ui').classList.add('hidden');
+                document.getElementById('game-ui').classList.remove('hidden');
+                
                 if (user.email === ADMIN_EMAIL) {
-                    ui.admin.classList.remove('hidden');
+                    document.getElementById('admin-tag').classList.remove('hidden');
+                    document.getElementById('admin-btn-back').classList.remove('hidden');
                     loadAdminPanel();
-                } else {
-                    ui.game.classList.remove('hidden');
-                    onSnapshot(doc(db, "drivers", user.uid), (s) => {
-                        if (s.exists()) {
-                            currentBalance = s.data().balance;
-                            document.getElementById('p-name').innerText = s.data().username;
-                            document.getElementById('p-balance').innerText = "Ksh " + currentBalance.toLocaleString();
-                        }
-                    });
                 }
-            } else { Object.values(ui).forEach(el => el.classList.add('hidden')); ui.auth.classList.remove('hidden'); }
+
+                onSnapshot(doc(db, "drivers", user.uid), (s) => {
+                    if (s.exists()) {
+                        currentBalance = s.data().balance;
+                        document.getElementById('p-name').innerText = s.data().username;
+                        document.getElementById('p-balance').innerText = "Ksh " + currentBalance.toLocaleString();
+                        updateBetButton();
+                    }
+                });
+            } else {
+                document.getElementById('auth-ui').classList.remove('hidden');
+                document.getElementById('game-ui').classList.add('hidden');
+                document.getElementById('admin-ui').classList.add('hidden');
+            }
         });
 
-        // ADMIN TOOLS
+        function updateBetButton() {
+            const btn = document.getElementById('bet-btn');
+            if (currentBalance <= 0 && !isPlaying) {
+                btn.innerText = "DEPOSIT TO PLAY";
+                btn.className = "w-full py-6 rounded-3xl bg-slate-800 text-slate-500 font-black text-2xl uppercase";
+            } else if (!isPlaying) {
+                btn.innerText = "PLACE BET";
+                btn.className = "w-full py-6 rounded-3xl bg-green-500 text-black font-black text-2xl uppercase";
+            }
+        }
+
+        window.toggleAdminPlay = () => {
+            const adminUI = document.getElementById('admin-ui');
+            const gameUI = document.getElementById('game-ui');
+            adminUI.classList.toggle('hidden');
+            // We keep game UI visible or hidden depending on focus
+        };
+
         async function loadAdminPanel() {
             const snap = await getDocs(collection(db, "drivers")), list = document.getElementById('admin-user-list');
             list.innerHTML = "";
             snap.forEach(uDoc => {
                 const d = uDoc.data();
                 const div = document.createElement('div');
-                div.className = "flex justify-between items-center bg-slate-900/50 p-4 rounded-xl border border-white/5";
-                div.innerHTML = `<div class='text-xs font-bold'>${d.username}</div>
-                    <div class='flex gap-2'><input type='number' id='inp-${uDoc.id}' value='${d.balance}' class='w-24 bg-black text-green-400 p-1 rounded text-center'>
-                    <button onclick="updateUserBal('${uDoc.id}')" class='bg-cyan-600 px-3 py-1 rounded text-[10px] font-bold'>SET</button></div>`;
+                div.className = "flex justify-between items-center bg-slate-900/50 p-3 rounded-xl";
+                div.innerHTML = `<span class='text-xs'>${d.username}</span>
+                    <div class='flex gap-2'><input type='number' id='inp-${uDoc.id}' value='${d.balance}' class='w-20 bg-black text-green-400 p-1 rounded text-center'>
+                    <button onclick="updateUserBal('${uDoc.id}')" class='bg-cyan-600 px-2 rounded text-[10px]'>SET</button></div>`;
                 list.appendChild(div);
             });
         }
+
         window.updateUserBal = async (uid) => {
             const val = parseInt(document.getElementById(`inp-${uid}`).value);
             await updateDoc(doc(db, "drivers", uid), { balance: val });
-            alert("Updated!");
         };
-        window.saveAdminSettings = async () => {
-            const crashVal = parseFloat(document.getElementById('next-crash').value);
-            await setDoc(doc(db, "settings", "game"), { nextCrash: crashVal });
-            alert("Multiplier Locked!");
-        };
-
-        // GAMEPLAY
-        window.adj = (v) => { let i = document.getElementById('bet-amt'); i.value = Math.max(50, parseInt(i.value) + v); };
 
         window.placeBet = async () => {
+            if (currentBalance <= 0 && !isPlaying) return alert("Your balance is 0. Please deposit!");
             if (isPlaying) { cashOut(); return; }
+            
             const amt = parseInt(document.getElementById('bet-amt').value);
-            if (amt > currentBalance || amt <= 0) return alert("Low Balance!");
+            if (amt > currentBalance || amt <= 0) return alert("Invalid Bet Amount");
             
             currentBet = amt; isPlaying = true; hasCashedOut = false; multiplier = 1.0;
             await updateDoc(doc(db, "drivers", auth.currentUser.uid), { balance: increment(-amt) });
             
             const btn = document.getElementById('bet-btn'), car = document.getElementById('car'), disp = document.getElementById('mult-display');
-            btn.innerText = "CASH OUT"; btn.className = "w-full py-6 rounded-3xl bg-orange-500 text-white font-black text-2xl uppercase";
+            btn.innerText = "CASH OUT"; btn.classList.replace('bg-green-500', 'bg-orange-500'); btn.classList.add('text-white');
             car.classList.remove('crashed');
             
-            // Get Admin-set crash point OR random
-            const settings = await getDoc(doc(db, "settings", "game"));
-            let crashPoint = (settings.exists()) ? settings.data().nextCrash : (Math.random() * 3 + 1.1).toFixed(2);
-
+            let crashPoint = (Math.random() * 5 + 1.1).toFixed(2);
             gameLoop = setInterval(() => {
                 multiplier += 0.01;
                 disp.innerText = multiplier.toFixed(2) + "x";
-                car.style.transform = `translate(${(multiplier-1)*70}px, -${(multiplier-1)*35}px)`;
+                car.style.transform = `translate(${(multiplier-1)*65}px, -${(multiplier-1)*30}px)`;
                 if (multiplier >= crashPoint) crashGame();
             }, 60);
         };
@@ -194,30 +196,19 @@
             document.getElementById('car').classList.add('crashed');
             const btn = document.getElementById('bet-btn');
             btn.innerText = "CRASHED!"; btn.className = "w-full py-6 rounded-3xl bg-red-600 text-white font-black text-2xl uppercase";
-            addHistory(multiplier.toFixed(2));
             setTimeout(() => {
-                btn.innerText = "PLACE BET"; btn.className = "w-full py-6 rounded-3xl bg-green-500 text-black font-black text-2xl uppercase";
+                updateBetButton();
                 document.getElementById('car').style.transform = "translate(0,0)";
             }, 2500);
         }
 
         async function cashOut() {
             if (!isPlaying || hasCashedOut) return;
-            hasCashedOut = true; 
+            hasCashedOut = true; isPlaying = false; clearInterval(gameLoop);
             const win = Math.floor(currentBet * multiplier);
             await updateDoc(doc(db, "drivers", auth.currentUser.uid), { balance: increment(win) });
             document.getElementById('bet-btn').innerText = "WIN: Ksh " + win;
             document.getElementById('bet-btn').className = "w-full py-6 rounded-3xl bg-blue-600 text-white font-black text-2xl uppercase";
-        }
-
-        function addHistory(val) {
-            const bar = document.getElementById('history-bar');
-            const pill = document.createElement('div');
-            const color = val > 2 ? 'text-blue-400' : 'text-orange-400';
-            pill.className = `history-pill glass px-3 py-1 rounded-full text-[10px] font-black border-white/10 ${color}`;
-            pill.innerText = val + "x";
-            bar.prepend(pill);
-            if(bar.children.length > 10) bar.lastChild.remove();
         }
 
         window.logout = () => signOut(auth);
