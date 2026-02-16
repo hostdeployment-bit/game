@@ -24,19 +24,14 @@
             <input type="text" id="reg-username" placeholder="Username" class="w-full p-4 rounded-2xl bg-slate-900 border border-slate-800 focus:border-cyan-500 outline-none">
             <input type="email" id="reg-email" placeholder="Gmail Address" class="w-full p-4 rounded-2xl bg-slate-900 border border-slate-800 focus:border-cyan-500 outline-none">
             <input type="password" id="reg-password" placeholder="Password" class="w-full p-4 rounded-2xl bg-slate-900 border border-slate-800 focus:border-cyan-500 outline-none">
-            
-            <button onclick="signUp()" class="btn-gradient w-full p-4 rounded-2xl font-black tracking-wide hover:scale-[1.02] active:scale-95 transition-all">
-                CREATE ACCOUNT
-            </button>
-            <p class="text-[10px] text-slate-500">Already have an account? <span class="text-cyan-400 cursor-pointer" onclick="toggleAuth()">Login</span></p>
+            <button onclick="signUp()" class="btn-gradient w-full p-4 rounded-2xl font-black tracking-wide hover:scale-[1.02] active:scale-95 transition-all">CREATE ACCOUNT</button>
+            <p class="text-[10px] text-slate-500">Already a driver? <span class="text-cyan-400 cursor-pointer" onclick="toggleAuth()">Login</span></p>
         </div>
 
         <div id="login-form" class="hidden space-y-4">
             <input type="email" id="login-email" placeholder="Email" class="w-full p-4 rounded-2xl bg-slate-900 border border-slate-800 focus:border-cyan-500 outline-none">
             <input type="password" id="login-password" placeholder="Password" class="w-full p-4 rounded-2xl bg-slate-900 border border-slate-800 focus:border-cyan-500 outline-none">
-            <button onclick="login()" class="btn-gradient w-full p-4 rounded-2xl font-black tracking-wide">
-                SIGN IN
-            </button>
+            <button onclick="login()" class="btn-gradient w-full p-4 rounded-2xl font-black tracking-wide">SIGN IN</button>
             <p class="text-[10px] text-slate-500">New driver? <span class="text-cyan-400 cursor-pointer" onclick="toggleAuth()">Sign Up</span></p>
         </div>
     </div>
@@ -45,14 +40,13 @@
         <div class="flex justify-between items-end mb-8 px-2">
             <div>
                 <h2 class="text-slate-500 text-[10px] font-bold tracking-widest uppercase">Verified Driver</h2>
-                <h1 id="user-display" class="neon-font text-2xl italic neon-cyan">POPKID</h1>
+                <h1 id="user-display" class="neon-font text-2xl italic neon-cyan">LOADING...</h1>
             </div>
             <div class="glass px-6 py-3 rounded-2xl border-cyan-500/20 text-right">
                 <p class="text-[9px] text-slate-500 font-bold mb-1">BALANCE</p>
-                <p id="balance-display" class="text-green-400 font-black text-xl">Ksh 12,500.00</p>
+                <p id="balance-display" class="text-green-400 font-black text-xl">Ksh 0.00</p>
             </div>
         </div>
-
         <div class="glass rounded-[2.5rem] p-3 border border-white/5">
             <img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800" class="rounded-[2rem] w-full h-56 object-cover mb-6">
             <div class="px-4 pb-6">
@@ -60,9 +54,7 @@
                     <h3 class="neon-font text-lg uppercase">Toyota Crown</h3>
                     <span class="text-[9px] bg-cyan-500/10 text-cyan-400 px-3 py-1 rounded-full border border-cyan-500/30 font-bold">LEGENDARY</span>
                 </div>
-                <button class="w-full p-6 rounded-3xl bg-white text-black font-black text-xl hover:bg-cyan-400 transition transform active:scale-95 shadow-2xl">
-                    START SHIFT
-                </button>
+                <button onclick="startShift()" class="w-full p-6 rounded-3xl bg-white text-black font-black text-xl hover:bg-cyan-400 transition transform active:scale-95 shadow-2xl">START SHIFT</button>
             </div>
         </div>
         <button onclick="logout()" class="w-full text-slate-600 text-[10px] uppercase font-bold mt-4 tracking-widest">Sign Out</button>
@@ -70,8 +62,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, onAuthStateChanged, signOut, reload } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, onAuthStateChanged, signOut, reload, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDe8i7FOSmuWCUhqwLXb9nBDWQKSIBKJpw",
@@ -86,65 +78,79 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // UI Toggler
+        // Keep user logged in across refreshes
+        setPersistence(auth, browserLocalPersistence);
+
         window.toggleAuth = () => {
             document.getElementById('signup-form').classList.toggle('hidden');
             document.getElementById('login-form').classList.toggle('hidden');
         };
 
-        // SIGN UP LOGIC
         window.signUp = async () => {
             const email = document.getElementById('reg-email').value;
             const pass = document.getElementById('reg-password').value;
             const user = document.getElementById('reg-username').value;
-
-            if(!user || !email || !pass) return alert("Fill all fields, Popkid!");
-
+            if(!user || !email || !pass) return alert("Fill all fields!");
             try {
                 const cred = await createUserWithEmailAndPassword(auth, email, pass);
-                // 1. Send Verification Link to Gmail
                 await sendEmailVerification(cred.user);
-                // 2. Save Initial Balance (12,500 Ksh)
-                await setDoc(doc(db, "drivers", cred.user.uid), {
-                    username: user,
-                    balance: 12500,
-                    verified: false
-                });
-                alert("Account created! Go to your Gmail and click the link to verify.");
+                await setDoc(doc(db, "drivers", cred.user.uid), { username: user, balance: 12500, car: "Toyota Crown" });
+                alert("Verification link sent! Check your Gmail.");
             } catch (err) { alert(err.message); }
         };
 
-        // LOGIN LOGIC
         window.login = async () => {
             const email = document.getElementById('login-email').value;
             const pass = document.getElementById('login-password').value;
             try {
-                await signInWithEmailAndPassword(auth, email, pass);
+                const cred = await signInWithEmailAndPassword(auth, email, pass);
+                await reload(cred.user);
+                if (!cred.user.emailVerified) {
+                    alert("Please verify your Gmail link first!");
+                    await signOut(auth);
+                }
             } catch (err) { alert(err.message); }
         };
 
-        // AUTH STATE OBSERVER
+        // UI Logic: Listen for user login and balance changes
+        let unsubBalance;
         onAuthStateChanged(auth, async (user) => {
             if (user) {
-                await reload(user); // Check if they just verified
+                await reload(user);
                 if (user.emailVerified) {
-                    const docSnap = await getDoc(doc(db, "drivers", user.uid));
-                    if(docSnap.exists()) {
-                        document.getElementById('user-display').innerText = docSnap.data().username;
-                        document.getElementById('balance-display').innerText = "Ksh " + docSnap.data().balance.toLocaleString();
-                        document.getElementById('auth-ui').classList.add('hidden');
-                        document.getElementById('garage-ui').classList.remove('hidden');
-                    }
-                } else {
-                    alert("Account found! But you MUST verify your Gmail link first.");
-                    await signOut(auth);
+                    document.getElementById('auth-ui').classList.add('hidden');
+                    document.getElementById('garage-ui').classList.remove('hidden');
+                    
+                    // Real-time listener: Update screen whenever database changes
+                    unsubBalance = onSnapshot(doc(db, "drivers", user.uid), (doc) => {
+                        if (doc.exists()) {
+                            document.getElementById('user-display').innerText = doc.data().username;
+                            document.getElementById('balance-display').innerText = "Ksh " + doc.data().balance.toLocaleString();
+                        }
+                    });
                 }
+            } else {
+                if(unsubBalance) unsubBalance();
+                document.getElementById('auth-ui').classList.remove('hidden');
+                document.getElementById('garage-ui').classList.add('hidden');
             }
         });
 
-        window.logout = () => {
-            signOut(auth).then(() => location.reload());
+        window.startShift = async () => {
+            const user = auth.currentUser;
+            if (user) {
+                alert("Shift started! Earning Ksh 50 per minute.");
+                setInterval(async () => {
+                    const userRef = doc(db, "drivers", user.uid);
+                    const docSnap = await getDoc(userRef);
+                    if (docSnap.exists()) {
+                        await updateDoc(userRef, { balance: docSnap.data().balance + 50 });
+                    }
+                }, 60000);
+            }
         };
+
+        window.logout = () => signOut(auth);
     </script>
 </body>
 </html>
