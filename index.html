@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RideSphere | Infinite Pro</title>
+    <title>RideSphere | Auto-Loop Fixed</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Inter:wght@400;700&display=swap');
@@ -42,10 +42,10 @@
         .car-sprite { filter: drop-shadow(0 0 15px var(--neon-blue)); transition: transform 0.1s linear; }
         .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
         
-        .btn-ready { background: #00f2ff; color: #000; box-shadow: 0 0 15px rgba(0, 242, 255, 0.4); }
-        .btn-cashout { background: linear-gradient(to right, #ff9d00, #ff5e00); color: #fff; box-shadow: 0 0 20px rgba(255, 157, 0, 0.5); }
+        .btn-ready { background: #00f2ff; color: #000; box-shadow: 0 0 15px rgba(0, 242, 255, 0.4); cursor: pointer; }
+        .btn-cashout { background: linear-gradient(to right, #ff9d00, #ff5e00); color: #fff; box-shadow: 0 0 20px rgba(255, 157, 0, 0.5); cursor: pointer; }
         .btn-locked { background: #1e293b; color: #475569; cursor: not-allowed; }
-        .btn-waiting { background: #0ea5e9; color: white; }
+        .btn-waiting { background: #0ea5e9; color: white; cursor: default; }
     </style>
 </head>
 <body class="p-4">
@@ -61,9 +61,9 @@
 
         <div id="game-stage">
             <div class="absolute inset-0 flex flex-col items-center justify-center z-50">
-                <div id="multi-val" class="multiplier-text font-game text-cyan-400">0.00x</div>
+                <div id="multi-val" class="multiplier-text font-game text-cyan-400">WAITING</div>
                 <div id="crash-label" class="text-red-500 font-bold tracking-[0.5em] uppercase hidden">Crashed!</div>
-                <div id="timer-label" class="text-cyan-400 font-bold uppercase hidden">Next Round in <span id="timer-sec">5</span>s</div>
+                <div id="timer-label" class="text-cyan-400 font-bold uppercase hidden text-xl">Next Round: <span id="timer-sec">5</span>s</div>
             </div>
 
             <div id="car-wrapper" class="absolute left-10 bottom-[15%] z-40 car-sprite">
@@ -88,7 +88,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDe8i7FOSmuWCUhqwLXb9nBDWQKSIBKJpw",
@@ -106,7 +106,7 @@
         let activeBet = 0;
         let hasBet = false;
         let hasCashedOut = false;
-        let gameState = 'WAITING';
+        let gameState = 'WAITING'; // Tracks the local state based on Firebase
         let currentMulti = 0.00;
 
         const balanceDisplay = document.getElementById('balance-display');
@@ -123,44 +123,31 @@
             balanceDisplay.innerText = `$${balance.toFixed(2)}`;
             localStorage.setItem('rs_balance', balance.toFixed(2));
         }
-
         updateBalanceUI(balance);
 
-        // --- THE INFINITE LOOP ENGINE ---
+        // --- CORE GAME LOOP ---
         async function runRound() {
-            // 1. STARTING THE RACE
-            gameState = 'RACING';
             let multi = 1.00;
-            const crashAt = (Math.random() * 5.5 + 1.05).toFixed(2);
+            const crashAt = (Math.random() * 5 + 1.1).toFixed(2);
             
             const ticker = setInterval(async () => {
                 if (multi >= crashAt) {
                     clearInterval(ticker);
-                    gameState = 'CRASHED';
-                    await setDoc(doc(db, "game", "live"), { state: 'CRASHED', val: multi });
-                    
-                    // Show crash for 3 seconds, then start countdown
+                    await setDoc(doc(db, "game", "live"), { state: 'CRASHED', val: parseFloat(multi) });
                     setTimeout(startCountdown, 3000);
                 } else {
-                    multi += 0.01 * (multi < 2 ? 1.1 : multi / 1.1);
-                    await setDoc(doc(db, "game", "live"), { state: 'RACING', val: multi });
+                    multi = parseFloat(multi) + 0.01 * (multi < 2 ? 1.1 : multi / 1.1);
+                    await setDoc(doc(db, "game", "live"), { state: 'RACING', val: parseFloat(multi) });
                 }
-            }, 60);
+            }, 80);
         }
 
         async function startCountdown() {
-            gameState = 'WAITING';
             let count = 5;
-            
-            // Clean local bet states for the new round
-            hasBet = false;
-            hasCashedOut = false;
-            activeBet = 0;
-
             const timer = setInterval(async () => {
                 if (count <= 0) {
                     clearInterval(timer);
-                    runRound(); // Auto-start next round
+                    runRound();
                 } else {
                     await setDoc(doc(db, "game", "live"), { state: 'WAITING', val: count });
                     count--;
@@ -168,36 +155,39 @@
             }, 1000);
         }
 
-        // --- UI SYNC (The Fix) ---
+        // --- REAL-TIME LISTENER ---
         onSnapshot(doc(db, "game", "live"), (snap) => {
             const data = snap.data();
-            if(!data) return;
+            if (!data) return;
+            
+            gameState = data.state; // Sync local state
             currentMulti = data.val;
 
-            if (data.state === 'WAITING') {
-                // Global UI Reset
+            if (gameState === 'WAITING') {
+                // Round Reset
+                hasBet = false;
+                hasCashedOut = false;
+                activeBet = 0;
+
                 multiDisplay.classList.add('hidden');
                 crashLabel.classList.add('hidden');
                 timerLabel.classList.remove('hidden');
-                timerSec.innerText = Math.floor(data.val);
+                timerSec.innerText = data.val;
                 road.classList.remove('animate-road');
                 car.style.transform = `translate(0, 0)`;
 
-                // Button Reset (if user hasn't bet yet)
-                if (!hasBet) {
-                    btn.innerText = "Place Bet";
-                    btn.className = "btn-ready rounded-3xl md:col-span-2 text-2xl font-black italic uppercase";
-                }
+                btn.innerText = "Place Bet";
+                btn.className = "btn-ready rounded-3xl md:col-span-2 text-2xl font-black italic uppercase";
             } 
-            else if (data.state === 'RACING') {
+            else if (gameState === 'RACING') {
                 multiDisplay.classList.remove('hidden');
                 timerLabel.classList.add('hidden');
                 multiDisplay.innerText = data.val.toFixed(2) + "x";
                 multiDisplay.className = "multiplier-text font-game text-white";
                 road.classList.add('animate-road');
                 
-                const y = (data.val - 1) * 60;
-                const x = (data.val - 1) * 15;
+                const y = (data.val - 1) * 65;
+                const x = (data.val - 1) * 18;
                 car.style.transform = `translate(${x}px, -${y}px)`;
 
                 if (hasBet && !hasCashedOut) {
@@ -205,7 +195,7 @@
                     btn.className = "btn-cashout rounded-3xl md:col-span-2 text-2xl font-black italic uppercase";
                 }
             } 
-            else if (data.state === 'CRASHED') {
+            else if (gameState === 'CRASHED') {
                 multiDisplay.innerText = data.val.toFixed(2) + "x";
                 multiDisplay.className = "multiplier-text font-game text-red-500";
                 crashLabel.classList.remove('hidden');
@@ -218,16 +208,13 @@
             }
         });
 
+        // --- BUTTON LOGIC ---
         window.handleMainAction = async () => {
             const betInput = document.getElementById('bet-input');
             const betVal = parseFloat(betInput.value);
 
-            // Check if game is in WAITING (Betting) phase
-            const snap = await getDoc(doc(db, "game", "live"));
-            const serverState = snap.data()?.state;
-
-            if (serverState === 'WAITING' && !hasBet) {
-                if (betVal > balance || betVal <= 0) return alert("Check Balance");
+            if (gameState === 'WAITING' && !hasBet) {
+                if (betVal > balance || betVal <= 0) return alert("Insufficient Balance");
                 
                 activeBet = betVal;
                 updateBalanceUI(balance - activeBet);
@@ -236,7 +223,7 @@
                 btn.innerText = "BET PLACED";
                 btn.className = "btn-waiting rounded-3xl md:col-span-2 text-2xl font-black italic uppercase";
             } 
-            else if (serverState === 'RACING' && hasBet && !hasCashedOut) {
+            else if (gameState === 'RACING' && hasBet && !hasCashedOut) {
                 const profit = activeBet * currentMulti;
                 updateBalanceUI(balance + profit);
                 hasCashedOut = true;
@@ -251,13 +238,8 @@
             input.value = (parseFloat(input.value) * mult).toFixed(2);
         };
 
-        // Initialize first loop if nothing is running
-        setTimeout(async () => {
-           const snap = await getDoc(doc(db, "game", "live"));
-           if(!snap.exists() || snap.data().state === 'CRASHED') {
-               startCountdown();
-           }
-        }, 1000);
+        // Bootstrapping the first round if DB is empty
+        setTimeout(() => { if (gameState === 'WAITING' && currentMulti === 0) startCountdown(); }, 2000);
 
     </script>
 </body>
